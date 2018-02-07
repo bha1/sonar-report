@@ -1,8 +1,6 @@
 package com.report.sonar;
 
 import java.io.FileOutputStream;
-import java.sql.Date;
-import java.sql.Timestamp;
 
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
@@ -12,30 +10,30 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExcelSheetUtil {
 
-	//private static final Logger logger = Logger.getLogger(ExcelSheetUtil.class.getName());
+	private static final Logger logger = Logger.getLogger(ExcelSheetUtil.class.getName());
 
 	private static final String EXCELFILENAME = "SonarReport.xslx";
 	
 	public XSSFWorkbook getNewWorkBook() {
-		//logger.info("creating workbook.");
+		logger.info("creating workbook.");
 		return new XSSFWorkbook();
 	}
 
 	public XSSFSheet createNewSheetInWorkBook(XSSFWorkbook workbook, String sheetName) {
-		//logger.info("adding new sheet " + sheetName + " to workbook.");
+		logger.info("adding new sheet " + sheetName + " to workbook.");
 		return workbook.createSheet(sheetName);
 	}
 
 	public void writeSheetToDisk(XSSFWorkbook workbook) {
 		try {
-			//logger.info("Begin writing sheet to disk.");
+			logger.info("Begin writing sheet to disk.");
 			FileOutputStream outputStream = new FileOutputStream(EXCELFILENAME);
 			workbook.write(outputStream);
 			//workbook.close();
 			outputStream.close();
-			//logger.info(EXCELFILENAME + " written to disk.");
+			logger.info(EXCELFILENAME + " written to disk.");
 		} catch (Exception e) {
-			//logger.fatal("Can't write workbook to disk.");
+			logger.fatal("Can't write workbook to disk.");
 			e.printStackTrace();
 		}
 	}
@@ -60,7 +58,7 @@ public class ExcelSheetUtil {
 				}
 			}
 		}
-		//logger.info("Number of rows written to sheet : " + rowNum);
+		logger.info("Number of rows written to sheet : " + rowNum);
 	}
 
 }
