@@ -4,11 +4,23 @@ apply plugin: 'eclipse'
 group = 'com.report'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+jar{
+   	manifest {
+        	attributes 'Main-Class': 'com.report.sonar.Application'
+    }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}
 
 repositories {
 	mavenCentral()
 }
 
+configurations {
+    // configuration that holds jars to include in the jar
+    extraLibs
+}
 
 dependencies {
 	// https://mvnrepository.com/artifact/org.apache.poi/poi
