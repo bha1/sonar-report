@@ -1,5 +1,7 @@
 .gradle
-/build/
+/build/c*
+/build/r*
+/build/t*
 !gradle/wrapper/gradle-wrapper.jar
 
 ### STS ###
@@ -17,11 +19,11 @@
 *.ipr
 
 ### NetBeans ###
-nbproject/private/
-build/
-nbbuild/
-dist/
-nbdist/
-.nb-gradle/
+#nbproject/private/
+#build/
+#nbbuild/
+#dist/
+#nbdist/
+#.nb-gradle/
 /.metadata/
 /bin/
