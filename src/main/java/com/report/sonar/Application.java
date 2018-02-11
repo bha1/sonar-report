@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Application {
 public static void main(String[] args) {
+	new BannerPrinter().printBanner();
 	RestTemplate template = new RestTemplate();
 	template.setRequestFactory(new SimpleClientHttpRequestFactory());
 	try {
