@@ -10,7 +10,11 @@ package com.report.sonar;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.ResponseEntity;
@@ -23,12 +27,33 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.report.dtos.Issue;
 import com.report.dtos.SonarResponse;
+import com.report.enums.SonarStatus;
 import com.report.util.BannerPrinter;
 import com.report.util.ExcelSheetUtil;
 
 public class Application {
+
+	public static final Logger logger = Logger.getLogger(Application.class.getName());
+	
 public static void main(String[] args) {
+	BasicConfigurator.configure();
+	Logger.getLogger(Application.class.getName()).setLevel(Level.INFO);
+	
 	new BannerPrinter().printBanner();
+	
+	
+	ArrayList<String> argsList = new ArrayList<>(Arrays.asList(args));
+	
+	//getStatusFilter
+	String statusFilter = "&statuses=OPEN,REOPENED";
+	for(String str:argsList) {
+		if(SonarStatus.fromValue(str)!=null) {
+			statusFilter+=","+str;
+		}
+		
+	}
+	
+	
 	RestTemplate template = new RestTemplate();
 	template.setRequestFactory(new SimpleClientHttpRequestFactory());
 	try {
