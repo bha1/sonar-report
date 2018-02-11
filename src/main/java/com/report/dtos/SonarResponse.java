@@ -6,7 +6,7 @@
  *
  */
 
-package com.report.sonar;
+package com.report.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

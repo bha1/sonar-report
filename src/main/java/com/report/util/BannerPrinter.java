@@ -6,7 +6,7 @@
  *
  */
 
-package com.report.sonar;
+package com.report.util;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
