@@ -18,6 +18,7 @@ public class SonarResponse {
 	private Paging paging;
 	private Issue[] issues;
 	private Component[] components;
+	private Rule rule;
 
 	/**
 	 * @return the total
@@ -108,5 +109,10 @@ public class SonarResponse {
 	public void setComponents(Component[] components) {
 		this.components = components;
 	}
-
+public Rule getRule() {
+	return rule;
+}
+public void setRule(Rule rule) {
+	this.rule = rule;
+}
 }
