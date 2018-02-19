@@ -119,4 +119,27 @@ public static void main(String[] args) {
 
 
 }
+	
+	
+		private static String getRuleName(String rule){
+		if(ruleMap.containsKey(rule)){
+			return ruleMap.get(rule);
+		}
+		String name = null;
+		RestTemplate template = new RestTemplate();
+		template.setRequestFactory(new SimpleClientHttpRequestFactory());
+		ResponseEntity<String> response = template.getForEntity("http://host-name/sonarqube/api/rules/show?key="+rule,
+				String.class);
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			SonarResponse obj = mapper.readValue(response.getBody(), SonarResponse.class);
+			name = obj.getRule().getName();
+			ruleMap.put(rule, name);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return name;
+		
+	}
 }
