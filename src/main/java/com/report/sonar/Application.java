@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.report.dtos.Issue;
 import com.report.dtos.SonarResponse;
-import com.report.enums.SonarStatus;
 import com.report.util.BannerPrinter;
 import com.report.util.ExcelSheetUtil;
 
@@ -46,80 +45,73 @@ public class Application {
 		ArrayList<String> argsList = new ArrayList<>(Arrays.asList(args));
 
 		// getStatusFilter
-		String statusFilter = "&statuses=OPEN,REOPENED";
-		for (String str : argsList) {
-			if (SonarStatus.fromValue(str) != null) {
-				statusFilter += "," + str;
-			}
-
+		int iterations = argsList.size() / 2;
+		if (argsList.size() % 2 != 0) {
+			logger.info("This requires even number of arguments to execute !!");
+			return;
 		}
 
 		RestTemplate template = new RestTemplate();
 		template.setRequestFactory(new SimpleClientHttpRequestFactory());
-		try {
-			String firstPageQueryParams = "&p=1&ps=1";
-			ResponseEntity<String> response = template.getForEntity(
-					"http://ip/sonarqube/api/issues/search?componentRoots=projectname&statuses=OPEN,REOPENED"
-							+ firstPageQueryParams,
-					String.class);
-			ObjectMapper mapper = new ObjectMapper();
-			SonarResponse obj = mapper.readValue(response.getBody(), SonarResponse.class);
-			// System.out.println("restcall completed");
-			Integer numberOfPages = (obj.getTotal() / 100) + 1;
+		String firstPageQueryParams = "&p=1&ps=1";
+		ExcelSheetUtil util = new ExcelSheetUtil();
+		XSSFWorkbook workbook = util.getNewWorkBook();
+		for (int z = 0; z < iterations; z++) {
+			try {
+				XSSFSheet sheet = workbook.createSheet(argsList.get(z * 2));
+				ResponseEntity<String> response = template
+						.getForEntity(argsList.get((z * 2) + 1) + firstPageQueryParams, String.class);
+				ObjectMapper mapper = new ObjectMapper();
+				SonarResponse obj = mapper.readValue(response.getBody(), SonarResponse.class);
 
-			XSSFWorkbook workbook = new XSSFWorkbook();
-			XSSFSheet sheet = workbook.createSheet("report");
-			ArrayList<String> list = new ArrayList<>();
-			String[][] arr = new String[obj.getTotal() + 1][6];
-			arr[0][0] = ("Component Id");
-			arr[0][1] = ("Severity");
-			arr[0][2] = ("Status");
-			arr[0][3] = ("Resolution");
-			arr[0][4] = ("Component");
-			arr[0][5] = ("Rule");
-			arr[0][6] = ("Type");
-			arr[0][7] = ("Text Range");
-			arr[0][8] = ("Error Message");
-			String queryParamsPre = "&p=";
-			String queryParamsPost = "&ps=100";
-			int i = 1;
-			for (int j = 1; j <= numberOfPages; j++) {
-				response = template.getForEntity(
-						"http://ip/sonarqube/api/issues/search?componentRoots=projectname&statuses=OPEN,REOPENED"
-								+ queryParamsPre + j,
-						String.class);
-				obj = mapper.readValue(response.getBody(), SonarResponse.class);
+				Integer numberOfPages = (obj.getTotal() / 100) + 1;
 
-				for (Issue issue : obj.getIssues()) {
-					arr[i][0] = (String.valueOf(issue.getComponentId()));
-					arr[i][1] = (issue.getSeverity());
-					arr[i][2] = (issue.getStatus());
-					arr[i][3] = (issue.getResolution());
-					arr[i][4] = (issue.getComponent());
-					arr[i][5] = (issue.getMessage());
-					//arr[i][6] = // page range;
-							// rule to text
-							//
-							System.out.println(i++);
+				String[][] arr = new String[obj.getTotal() + 1][9];
+				arr[0][0] = "Component Id";
+				arr[0][1] = "Severity";
+				arr[0][2] = "Status";
+				arr[0][3] = "Resolution";
+				arr[0][4] = "Component";
+				arr[0][5] = "Rule";
+				arr[0][6] = "Type";
+				arr[0][7] = "Text Range";
+				arr[0][8] = "Error Message";
+
+				String queryParamsPre = "&p=";
+				String queryParamsPost = "&ps=100";
+				int i = 1;
+				for (int j = 1; j <= numberOfPages; j++) {
+					response = template.getForEntity(argsList.get((z * 2) + 1) + queryParamsPre + j + queryParamsPost,
+							String.class);
+					obj = mapper.readValue(response.getBody(), SonarResponse.class);
+
+					for (Issue issue : obj.getIssues()) {
+						arr[i][0] = String.valueOf(issue.getComponentId());
+						arr[i][1] = issue.getSeverity();
+						arr[i][2] = issue.getStatus();
+						arr[i][3] = issue.getResolution();
+						arr[i][4] = issue.getComponent();
+						arr[i][5] = getRuleName(issue.getRule());
+						arr[i][6] = issue.getType();
+						if (issue.getTextRange() != null) {
+							arr[i][7] = (issue.getTextRange().getStartLine() + " - "
+									+ issue.getTextRange().getEndLine());
+						}
+						arr[i][8] = issue.getMessage();
+ 					}
 				}
+				util.writeRecordSetToSheet(arr, sheet);
+			} catch (RestClientException e) {
+				e.printStackTrace();
+			} catch (JsonParseException e) {
+				e.printStackTrace();
+			} catch (JsonMappingException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			// TODO sdsfdsfdsfsdfsdfsdfsdfsdf
-			ExcelSheetUtil util = new ExcelSheetUtil();
-			util.writeRecordSetToSheet(arr, sheet);
-			util.writeSheetToDisk(workbook);
-		} catch (RestClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+		util.writeSheetToDisk(workbook);
 
 	}
 
