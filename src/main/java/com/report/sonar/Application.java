@@ -50,20 +50,20 @@ public class Application {
 			logger.info("This requires even number of arguments to execute !!");
 			return;
 		}
-
+		String hostName = "";
 		RestTemplate template = new RestTemplate();
 		template.setRequestFactory(new SimpleClientHttpRequestFactory());
 		String firstPageQueryParams = "&p=1&ps=1";
 		ExcelSheetUtil util = new ExcelSheetUtil();
 		XSSFWorkbook workbook = util.getNewWorkBook();
-		for (int z = 0; z < iterations; z++) {
-			try {
+		try {
+			for (int z = 0; z < iterations; z++) {
 				XSSFSheet sheet = workbook.createSheet(argsList.get(z * 2));
 				ResponseEntity<String> response = template
 						.getForEntity(argsList.get((z * 2) + 1) + firstPageQueryParams, String.class);
 				ObjectMapper mapper = new ObjectMapper();
 				SonarResponse obj = mapper.readValue(response.getBody(), SonarResponse.class);
-
+				hostName = argsList.get((z * 2) + 1).split("/sonarqube/")[0];
 				Integer numberOfPages = (obj.getTotal() / 100) + 1;
 
 				String[][] arr = new String[obj.getTotal() + 1][9];
@@ -79,50 +79,49 @@ public class Application {
 
 				String queryParamsPre = "&p=";
 				String queryParamsPost = "&ps=100";
-				int i = 1;
 				for (int j = 1; j <= numberOfPages; j++) {
 					response = template.getForEntity(argsList.get((z * 2) + 1) + queryParamsPre + j + queryParamsPost,
 							String.class);
 					obj = mapper.readValue(response.getBody(), SonarResponse.class);
 
 					for (Issue issue : obj.getIssues()) {
-						arr[i][0] = String.valueOf(issue.getComponentId());
-						arr[i][1] = issue.getSeverity();
-						arr[i][2] = issue.getStatus();
-						arr[i][3] = issue.getResolution();
-						arr[i][4] = issue.getComponent();
-						arr[i][5] = getRuleName(issue.getRule());
-						arr[i][6] = issue.getType();
+						arr[j][0] = String.valueOf(issue.getComponentId());
+						arr[j][1] = issue.getSeverity();
+						arr[j][2] = issue.getStatus();
+						arr[j][3] = issue.getResolution();
+						arr[j][4] = issue.getComponent();
+						arr[j][5] = getRuleName(issue.getRule(),hostName);
+						arr[j][6] = issue.getType();
 						if (issue.getTextRange() != null) {
-							arr[i][7] = (issue.getTextRange().getStartLine() + " - "
+							arr[j][7] = (issue.getTextRange().getStartLine() + " - "
 									+ issue.getTextRange().getEndLine());
 						}
-						arr[i][8] = issue.getMessage();
- 					}
+						arr[j][8] = issue.getMessage();
+					}
 				}
 				util.writeRecordSetToSheet(arr, sheet);
-			} catch (RestClientException e) {
-				e.printStackTrace();
-			} catch (JsonParseException e) {
-				e.printStackTrace();
-			} catch (JsonMappingException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
+			util.writeSheetToDisk(workbook);
+		} catch (RestClientException e) {
+			e.printStackTrace();
+		} catch (JsonParseException e) {
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		util.writeSheetToDisk(workbook);
 
 	}
 
-	private static String getRuleName(String rule) {
+	private static String getRuleName(String rule,String hostName) {
 		if (ruleMap.containsKey(rule)) {
 			return ruleMap.get(rule);
 		}
 		String name = null;
 		RestTemplate template = new RestTemplate();
 		template.setRequestFactory(new SimpleClientHttpRequestFactory());
-		ResponseEntity<String> response = template.getForEntity("http://host-name/sonarqube/api/rules/show?key=" + rule,
+		ResponseEntity<String> response = template.getForEntity(hostName+"/sonarqube/api/rules/show?key=" + rule,
 				String.class);
 		ObjectMapper mapper = new ObjectMapper();
 		try {
